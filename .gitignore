@@ -2,6 +2,11 @@
 __pycache__/
 *.py[codz]
 *$py.class
+.env
+
+distilbert-imdb-sentiment-analysis/
+mlruns/
+.venv/
 
 # C extensions
 *.so

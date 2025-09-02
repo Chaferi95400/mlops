@@ -1,96 +1,78 @@
-# MLOps – Course Project
+# MLOps - Sentiment Analysis API Project
 
-Ce dépôt contient les diapositives, les laboratoires et un projet complet démontrant un workflow MLOps de base de bout en bout. Le projet final consiste en un microservice de Machine Learning qui sert un modèle de classification du cancer mammaire, avec un suivi des expériences via MLflow.
+This repository contains a complete MLOps workflow demonstrating how to fine-tune a sentiment analysis model, push it to the Hugging Face Hub, and serve it via a FastAPI microservice.
 
-## Architecture Finale
+The final application is a **Sentiment Analysis API** that serves a `DistilBERT` model fine-tuned on the IMDB dataset.
 
-Le projet est structuré pour séparer clairement l'entraînement du service de prédiction :
+**Model available on the Hugging Face Hub:**
+[jhondoee/distilbert-imdb-sentiment-analysis](https://huggingface.co/jhondoee/distilbert-imdb-sentiment-analysis)
 
-*   **`labs/Lab_1/train.py`**: Un script responsable de l'entraînement du modèle. Il utilise `scikit-learn` pour créer un pipeline de prétraitement et un classificateur `LogisticRegression`.
-*   **`project/ml_microservice/preprocessing.py`**: Contient la logique de feature engineering personnalisée (`add_combined_feature`). Ce code est partagé entre l'entraînement et l'inférence pour garantir la cohérence.
-*   **`MLflow`**: Utilisé pour suivre les expériences d'entraînement. Chaque exécution enregistre les hyperparamètres, les métriques de performance (score CV) et l'artefact du modèle final. Le serveur est lancé localement et stocke ses données dans le dossier `mlruns`.
-*   **`project/ml_microservice/app.py`**: Un microservice FastAPI qui expose un point d'accès `/predict`. Au lieu de charger un fichier de modèle local, il se connecte au registre MLflow pour charger dynamiquement le modèle spécifié par un "Run ID".
-*   **`project/ml_microservice/test_app.py`**: Un ensemble de tests utilisant `pytest` pour valider le bon fonctionnement du microservice, y compris le chargement du modèle et la prédiction.
+## Architecture
 
-## Guide d'Exécution Complet
+*   **`train_sentiment_model.py`**: A script that uses the `transformers` and `datasets` libraries to fine-tune a `distilbert-base-uncased` model. Upon completion, the trained model is automatically pushed to a dedicated repository on the Hugging Face Hub.
+*   **`create_hf_repo.py`**: A utility script to programmatically create the repository on the Hub before training.
+*   **`app.py`**: A FastAPI microservice that loads the fine-tuned model directly from the Hugging Face Hub using an access token. It exposes a `/sentiment` endpoint to analyze lists of texts.
+*   **`.env`**: A file (ignored by Git) to securely store the Hugging Face access token.
 
-Pour lancer le projet de A à Z, suivez ces étapes depuis la racine du dépôt.
+## Setup and Execution Guide
 
-### 1. Initialiser l'Environnement du Projet
+Follow these steps to run the project from start to finish.
 
-Cette commande crée un environnement virtuel dédié dans `project/ml_microservice/.venv` et installe toutes les dépendances nécessaires (FastAPI, scikit-learn, MLflow, etc.).
+### 1. Clone the Repository
+```bash
+git clone <your-repo-url>
+cd <your-repo-name>
+```
+
+### 2. Setup Environment
+Create a `.env` file by copying the example file.
 
 ```bash
-make -C project/ml_microservice init
+cp .env.example .env
+```
+Now, edit the `.env` file and paste your Hugging Face access token (you can create one in your [Hugging Face Settings](https://huggingface.co/settings/tokens)). It must have **write** permissions.
+
+```text
+# .env
+HUGGING_FACE_TOKEN="hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 ```
 
-### 2. Entraîner et Enregistrer le Modèle
-
-Exécutez le script d'entraînement. Cela va :
-1.  Charger les données.
-2.  Lancer une recherche d'hyperparamètres (`GridSearchCV`).
-3.  Créer un dossier `mlruns` à la racine pour stocker les résultats de l'expérience.
-4.  Enregistrer les paramètres, les métriques et le pipeline du modèle dans MLflow.
-
+### 3. Install Dependencies
+It is recommended to use a virtual environment.
 ```bash
-python labs/Lab_1/train.py
+pip install -r requirements.txt
 ```
 
-### 3. Lancer l'Interface MLflow et Récupérer le "Run ID"
-
-Pour identifier le modèle que nous voulons servir, nous avons besoin de son ID d'exécution.
-
+### 4. Create the Hugging Face Repo
+This script creates the repository on the Hub where the model will be stored.
 ```bash
-# Lance le serveur web de MLflow (Sur http://127.0.0.1:5000)
-mlflow ui
+python create_hf_repo.py
 ```
 
-Dans l'interface web :
-1.  Cliquez sur l'expérience "Default".
-2.  Cliquez sur le nom de l'exécution (ex: `unleashed-cub-377`) pour voir ses détails.
-3.  Copiez la valeur du **`Run ID`** (ex: `9c68a9d825b74493a68894489cc28505`).
-
-### 4. Configurer et Lancer le Microservice
-
-Ouvrez le fichier `project/ml_microservice/app.py` et collez le `Run ID` que vous venez de copier dans la variable `RUN_ID`.
-
-```python
-# project/ml_microservice/app.py
-
-# ...
-RUN_ID = "9c68a9d825b74493a68894489cc28505" # <-- COLLEZ VOTRE ID ICI
-MODEL_URI = f"runs:/{RUN_ID}/model"
-# ...
-```
-
-Ensuite, lancez le serveur FastAPI. Il occupera ce terminal.
-
+### 5. Train and Push the Model
+Run the training script. This will download the IMDB dataset, fine-tune the model, and upload it to your Hugging Face repository. This step will take a significant amount of time depending on your hardware.
 ```bash
-make -C project/ml_microservice run
+python train_sentiment_model.py
 ```
 
-### 5. Tester le Service
-
-Ouvrez un **nouveau terminal**. Pour que les tests fonctionnent, Vous devez activer le bon environnement virtuel et indiquer à MLflow où trouver sa base de données.
-
+### 6. Run the API
+Once the model is successfully pushed to the Hub, you can start the API server. It will download the model on startup.
 ```bash
-source project/ml_microservice/.venv/bin/activate.fish
-OU
-source project/ml_microservice/.venv/bin/activate
-
-# 2. Indiquer le chemin vers la base de données MLflow
-export MLFLOW_TRACKING_URI="file://$(pwd)/mlruns" dans ton shell
-
-# 3. Lancer les tests
-make -C project/ml_microservice test
+uvicorn app:app --reload
 ```
 
-Si les tests passent (`2 passed`), le workflow est complet et fonctionnel. (Ils passent je les ai tester)
+### 7. Test the API
+Open a **new terminal** and send a test request using `curl`.
+```bash
+curl -X POST "http://127.0.0.1:8000/sentiment" \
+-H "Content-Type: application/json" \
+-d '{"texts": ["This movie is a masterpiece", "I really hated this film"]}'
+```
 
-## Problèmes Résolus (Key Learnings)
-
-Au cours de ce projet, plusieurs problèmes MLOps courants ont été identifiés et résolus :
-
-1.  **Incohérence de Données API/Modèle** : L'API attendait initialement du texte alors que le modèle attendait une liste de nombres. Le contrat de données de l'API a été corrigé pour correspondre aux attentes du modèle.
-2.  **Dépendance de `joblib` au Contexte** : Le chargement du modèle échouait car la fonction de prétraitement personnalisée (`add_combined_feature`) n'était pas définie dans le contexte de l'application. La solution a été de déplacer cette fonction dans un module partagé (`preprocessing.py`) importé à la fois par le script d'entraînement et l'application.
-3.  **Contexte d'Exécution de MLflow** : L'application ne trouvait pas le "Run ID" car elle ne savait pas où se trouvait le dossier `mlruns`. La solution a été de définir la variable d'environnement `MLFLOW_TRACKING_URI` pour fournir explicitement le chemin.
+You should receive a JSON response with the sentiment predictions:
+```json
+[
+  {"label": "POSITIVE", "score": 0.99...},
+  {"label": "NEGATIVE", "score": 0.99...}
+]
+```
