@@ -1,31 +1,26 @@
-# MLOps – Course
+MLOps – Course Project
 
-This repository contains the slides, labs, and project scaffold for a  MLOps training:
 
-## Structure
-```
-mlops_2day_course/
-├── slides/
-│   └── MLOps_SupdeVinci.pptx
-├── labs/
-│   ├── Lab1/
-│   └── Lab2_SA_HuggingFace/
-├── project/
-│   └── ml_microservice/
-├── docs/
-│   └── syllabus.md
+Ce dépôt contient les diapositives, les laboratoires et un projet complet démontrant un workflow MLOps de base de bout en bout. Le projet final consiste en un microservice de Machine Learning qui sert un modèle de classification du cancer du sein, avec un suivi des expériences via MLflow.
 
-```
+Architecture Finale
 
-## Quickstart
-```bash
-# create & activate env
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r project/ml_microservice/requirements.txt
 
-# run microservice locally
-make -C project/ml_microservice run
+Le projet est structuré pour séparer clairement l'entraînement du service de prédiction :
 
-# run tests
-make -C project/ml_microservice test
-```
+
+- labs/Lab_1/train.py: Un script responsable de l'entraînement du modèle. Il utilise scikit-learn pour créer un pipeline de prétraitement et un classificateur LogisticRegression.
+- project/ml_microservice/preprocessing.py: Contient la logique de feature engineering personnalisée (add_combined_feature). Ce code est partagé entre l'entraînement et l'inférence pour garantir la cohérence.
+- MLflow: Utilisé pour suivre les expériences d'entraînement. Chaque exécution enregistre les hyperparamètres, les métriques de performance (score CV) et l'artefact du modèle final. Le serveur est lancé localement et stocke ses données dans le dossier mlruns.
+- project/ml_microservice/app.py: Un microservice FastAPI qui expose un point d'accès /predict. Au lieu de charger un fichier de modèle local, il se connecte au registre MLflow pour charger dynamiquement le modèle spécifié par un "Run ID".
+- project/ml_microservice/test_app.py: Un ensemble de tests utilisant pytest pour valider le bon fonctionnement du microservice, y compris le chargement du modèle et la prédiction.
+
+Guide d'Exécution Complet
+
+
+Pour lancer le projet de A à Z, suivez ces étapes depuis la racine du dépôt.
+
+1. Initialiser l'Environnement du Projet
+
+
+Cette commande crée un environnement virtuel dédié dans project/ml_microservice/.venv et installe toutes les dépendances nécessaires (FastAPI, scikit-learn, MLflow, etc.).
