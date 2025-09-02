@@ -1,0 +1,14 @@
+artifact_uri: file:///home/xut/Documents/MLOps-Course-M2/mlruns/0/9c68a9d825b74493a68894489cc28505/artifacts
+end_time: 1756793142782
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 9c68a9d825b74493a68894489cc28505
+run_name: unleashed-cub-377
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1756793140916
+status: 3
+tags: []
+user_id: xut

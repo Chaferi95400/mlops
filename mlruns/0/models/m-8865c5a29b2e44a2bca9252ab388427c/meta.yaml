@@ -1,0 +1,10 @@
+artifact_location: file:///home/xut/Documents/MLOps-Course-M2/mlruns/0/models/m-8865c5a29b2e44a2bca9252ab388427c/artifacts
+creation_timestamp: 1756793141674
+experiment_id: '0'
+last_updated_timestamp: 1756793142781
+model_id: m-8865c5a29b2e44a2bca9252ab388427c
+model_type: null
+name: model
+source_run_id: 9c68a9d825b74493a68894489cc28505
+status: 2
+status_message: null
