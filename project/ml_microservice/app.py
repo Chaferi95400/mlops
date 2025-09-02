@@ -1,14 +1,15 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from typing import List
 import joblib
 import os
+from preprocessing import add_combined_feature
 
 app = FastAPI(title="MLOps Microservice")
 
-class Item(BaseModel):
-    text: str
+class PredictionRequest(BaseModel):
+    features: List[float]
 
-# Lazy model load (placeholder: replace with your trained pipeline)
 MODEL_PATH = os.getenv("MODEL_PATH", "artifacts/model.joblib")
 _model = None
 
@@ -23,10 +24,10 @@ def health():
     return {"status": "ok"}
 
 @app.post("/predict")
-def predict(item: Item):
+def predict(request: PredictionRequest):
     model = get_model()
     if model is None:
         return {"error": "Model not found. Train and place at artifacts/model.joblib"}
-    # For text models, ensure the joblib pipeline includes vectorizer/tokenizer
-    pred = model.predict([item.text])[0]
+    
+    pred = model.predict([request.features])[0]
     return {"prediction": str(pred)}
