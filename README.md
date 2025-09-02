@@ -1,5 +1,5 @@
 # MLOps - Sentiment Analysis API Project
-
+lien du repo : nassimmkd/distilbert-imdb-sentiment-analysis
 This repository contains a complete MLOps workflow demonstrating how to fine-tune a sentiment analysis model, push it to the Hugging Face Hub, and serve it via a FastAPI microservice.
 
 The final application is a **Sentiment Analysis API** that serves a `DistilBERT` model fine-tuned on the IMDB dataset.
